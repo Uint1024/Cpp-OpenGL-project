@@ -9,7 +9,8 @@
 
 #define GLEW_STATIC
 #include <iostream>
-
+#include <fstream>
+#include <ios>
 #define GLM_FORCE_RADIANS
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -43,119 +44,98 @@ namespace Math
 }
 
 
-/*
-void OpenGL_CheckProgramLinkStatus(GLuint program)
-{
-	GLint program_success = GL_TRUE;
-	glGetProgramiv(program, GL_LINK_STATUS, &program_success );
-	if(program_success != GL_TRUE)
+namespace opengl{
+	void CheckProgramLinkStatus(GLuint program)
 	{
-		printf("Error linking program %d!\n", program);
-
-		int info_length = 0;
-		int max_length = 0;
-
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &max_length);
-		char* info_log = calloc(1, max_length+1);
-		glGetProgramInfoLog(program, max_length, &info_length, info_log);
-		if(info_length > 0){
-			printf("%s\n", info_log);
-		}
-
-		free(info_log);
-	}
-	else
-	{
-		printf("Linking successful.\n");
-	}
-}
-
-void OpenGL_CheckShaderCompilationErrors(GLuint shader_id)
-{
-	GLint success = GL_FALSE;
-	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
-	if(success == GL_FALSE)
-	{
-		perror("Error during vertex shader compilation\n");
-	}
-	else
-	{
-		printf("Compilation success, no error.\n");
-	}
-}
-
-
-void OpenGL_CheckOpenGLErrors()
-{
-	GLenum error = 0;
-	error = glGetError();
-
-	while((error = glGetError()) != GL_NO_ERROR)
-	{
-		switch(error)
+		GLint program_success = GL_TRUE;
+		glGetProgramiv(program, GL_LINK_STATUS, &program_success );
+		if(program_success != GL_TRUE)
 		{
-		case GL_INVALID_ENUM:
-			printf("GL_INVALID_ENUM\n");
-			break;
-		case GL_INVALID_VALUE:
-			printf("GL_INVALID_VALUE\n");
-			break;
-		case GL_INVALID_OPERATION:
-			printf("GL_INVALID_OPERATION\n");
-			break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION:
-			printf("GL_INVALID_FRAMEBUFFER_OPERATION\n");
-			break;
-		default:
-			printf("Other error\n");
-			break;
+			printf("Error linking program %d!\n", program);
+
+			int info_length = 0;
+			int max_length = 0;
+
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &max_length);
+			char info_log[max_length];
+			glGetProgramInfoLog(program, max_length, &info_length, info_log);
+			if(info_length > 0){
+				printf("%s\n", info_log);
+			}
+
+			//delete info_log;
+		}
+		else
+		{
+			printf("Linking successful.\n");
 		}
 	}
-	printf("No more errors\n");
+
+	void CheckShaderCompilationErrors(GLuint shader_id)
+	{
+		GLint success = GL_FALSE;
+		glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
+		if(success == GL_FALSE)
+		{
+			perror("Error during vertex shader compilation\n");
+		}
+		else
+		{
+			printf("Compilation success, no error.\n");
+		}
+	}
+
+
+	void CheckOpenGLErrors()
+	{
+		GLenum error = 0;
+		error = glGetError();
+
+		while((error = glGetError()) != GL_NO_ERROR)
+		{
+			switch(error)
+			{
+			case GL_INVALID_ENUM:
+				printf("GL_INVALID_ENUM\n");
+				break;
+			case GL_INVALID_VALUE:
+				printf("GL_INVALID_VALUE\n");
+				break;
+			case GL_INVALID_OPERATION:
+				printf("GL_INVALID_OPERATION\n");
+				break;
+			case GL_INVALID_FRAMEBUFFER_OPERATION:
+				printf("GL_INVALID_FRAMEBUFFER_OPERATION\n");
+				break;
+			default:
+				printf("Other error\n");
+				break;
+			}
+		}
+		printf("No more errors\n");
+	}
+
+	//oen file_name, put its content in char_array, return the char array's size
+	const char* ReadFileToString(const GLchar** file_name)
+	{
+		std::ifstream shader_file(*file_name);
+
+		if(!shader_file){
+			std::cout << "Can't open vertex_shader.gl" << std::endl;
+		}
+		std::string src_code((std::istreambuf_iterator<char>(shader_file)),
+			std::istreambuf_iterator<char>());
+
+		return src_code.c_str();
+
+
+	}
 }
 
-//open file_name, put its content in char_array, return the char array's size
-int OpenGL_ReadFileToString(GLchar** char_array, char** file_name)
-{
-	FILE *fp = NULL;
-	int fSize = 0;
-	fp = fopen(*file_name, "rb");
-
-	if(!fp)
-	{
-		perror("Can't open vertex_shader.gl");
-	}
-
-	fseek(fp, 0, SEEK_END);
-	fSize = ftell(fp);
-	rewind(fp);
-
-	*char_array = calloc(1, fSize+1);
-
-	if(!char_array)
-	{
-		fclose(fp);
-		fputs("Memory alloc fails", stderr);
-	}
-
-
-	if(fread(*char_array, fSize, 1, fp) != 1)
-	{
-
-		fclose(fp);
-		free(*char_array);
-		fputs("Read file fails", stderr);
-	}
-	fclose(fp);
-
-
-
-	return fSize;
-}
-*/
 
 int main(int argc, char* args[])
 {
+
 	//fix for Eclipse's console!
 	setvbuf (stdout, NULL, _IONBF, 0);
 
@@ -196,7 +176,7 @@ int main(int argc, char* args[])
 
 
 
-	/*//Creating vertex array object
+	//Creating vertex array object
 	GLuint vao; 				//vao id
 	glGenVertexArrays(1, &vao);	//generate vao for this id
 	glBindVertexArray(vao);		//bind the vao (make it active)
@@ -205,9 +185,9 @@ int main(int argc, char* args[])
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	GLfloat vertices[] = {
-			-0.5,  0.5, 0.0, 0.0, 0.0, 	//top left
-			 0.5,  0.5, 0.0, 0.0, 0.0, 	//top right
-			 0.5, -0.5, 0.0, 0.0, 0.0, 	//bottom left
+			-0.5,  0.5, 1.0, 0.0, 0.0, 	//top left
+			 0.5,  0.5, 0.0, 1.0, 0.0, 	//top right
+			 0.5, -0.5, 0.0, 0.0, 1.0, 	//bottom left
 			-0.5, -0.5, 0.0, 0.0, 0.0 	//bottom right
 	};
 
@@ -233,23 +213,23 @@ int main(int argc, char* args[])
 	//Reading and compiling the shader sources
 	//vertex
 
-	GLchar* vertex_shader_source = NULL;
-	char* vertex_shader_file_name = "vertex_shader.gl";
-	int size = OpenGL_ReadFileToString(&vertex_shader_source, &vertex_shader_file_name);
+	const GLchar* vertex_shader_file_name = "vertex_shader.gl";
+	const char* vertex_shader_source = opengl::ReadFileToString(
+															&vertex_shader_file_name);
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, (const GLchar* const*)&vertex_shader_source, &size);
+	glShaderSource(vertex_shader, 1, (const GLchar* const*)&vertex_shader_source, NULL);
 	glCompileShader(vertex_shader);
-	OpenGL_CheckShaderCompilationErrors(vertex_shader);
+	opengl::CheckShaderCompilationErrors(vertex_shader);
 
 
 	//fragment
-	GLchar* fragment_shader_source = NULL;
-	char* fragment_shader_file_name = "fragment_shader.gl";
-	OpenGL_ReadFileToString(&fragment_shader_source, &fragment_shader_file_name);
+	const char* fragment_shader_file_name = "fragment_shader.gl";
+	const GLchar* fragment_shader_source = opengl::ReadFileToString(
+			&fragment_shader_file_name);
 	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment_shader, 1, (const GLchar* const*)&fragment_shader_source, NULL);
 	glCompileShader(fragment_shader);
-	OpenGL_CheckShaderCompilationErrors(fragment_shader);
+	opengl::CheckShaderCompilationErrors(fragment_shader);
 
 	//Linking vertex and fragment shaders into a shader program
 	GLuint shader_program = glCreateProgram();
@@ -258,7 +238,7 @@ int main(int argc, char* args[])
 	glBindFragDataLocation(shader_program, 0, "outColor");
 	glLinkProgram(shader_program);
 
-	OpenGL_CheckProgramLinkStatus(shader_program);
+	opengl::CheckProgramLinkStatus(shader_program);
 
 	glUseProgram(shader_program);
 
@@ -274,21 +254,64 @@ int main(int argc, char* args[])
 
 
 
-*/
-	glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
-	glm::mat4 trans;
-	//Math::PrintMatrice4Values(trans);
-	trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
-	Math::PrintMatrice4Values(trans);
-	vec = trans * vec;
 
-	std::cout << vec.x << vec.y << vec.z << std::endl;
-
+	glm::vec3 position(0.0f, 0.0f, 0.0f);
 	while (running)
 	{
-		/*vertices[2] = sin(SDL_GetTicks()/1000.0f);
-		vertices[3] = cos(SDL_GetTicks()/1000.0f);
-		vertices[4] = cos((SDL_GetTicks() + 1000)/1000.0f);
+		const Uint8* state = SDL_GetKeyboardState(NULL);
+
+
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				running = false;
+			}
+
+			if (state[SDL_SCANCODE_W])
+			{
+				position.y += 0.01f;
+
+			}
+			if (state[SDL_SCANCODE_S])
+			{
+				position.y -= 0.01f;
+
+			}
+
+		}
+
+		glm::mat4 view;
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		position.x = cos(SDL_GetTicks()/1000.0f);
+		position.y = sin(SDL_GetTicks()/1000.0f);
+		//position.x = cos
+
+		glm::mat4 projection = glm::perspective(45.0f,
+				(float)screen_width/(float)screen_height,
+				0.1f, 100.0f);
+
+		glm::mat4 model;
+		float angle =  SDL_GetTicks() / 10 %360;
+		model = glm::translate(model, position);
+		model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 10.0f));
+
+		/*GLuint transform_location = glGetUniformLocation(shader_program, "transform");
+		glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(trans));
+*/
+		GLuint model_location = glGetUniformLocation(shader_program, "model");
+		GLuint view_location = glGetUniformLocation(shader_program, "view");
+		GLuint projection_location = glGetUniformLocation(shader_program, "projection");
+		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+
+
+		vertices[2] = 1;
+		vertices[3] = 1;
+		vertices[4] = 1;
 
 		vertices[7] = cos((SDL_GetTicks() + 2000)/1000.0f);
 		vertices[8] = sin((SDL_GetTicks() + 8500)/1000.0f);
@@ -306,28 +329,22 @@ int main(int argc, char* args[])
 		glBufferData(GL_ARRAY_BUFFER, 		//transfer vertices data to the buffer
 					sizeof(vertices),
 					vertices,
-					GL_STATIC_DRAW);*/
-		while (SDL_PollEvent(&e) != 0)
-		{
-			if (e.type == SDL_QUIT)
-			{
-				running = false;
-			}
-		}
-		glClearColor(1.0, 0.0, 0.0, 1.0);
+					GL_STATIC_DRAW);
+
+		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		SDL_GL_SwapWindow(window);
 
 	}
-	/*glDeleteProgram(shader_program);
+	glDeleteProgram(shader_program);
 	glDeleteShader(fragment_shader);
 	glDeleteShader(vertex_shader);
 	glDeleteBuffers(1, &ebo);
 	glDeleteBuffers(1, &vbo);
-	glDeleteVertexArrays(1, &vao);*/
+	glDeleteVertexArrays(1, &vao);
 	SDL_DestroyWindow(window);
 
 	SDL_GL_DeleteContext(context);
