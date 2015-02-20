@@ -23,161 +23,32 @@
 #include <stdbool.h>
 #include <math.h>
 
+#include "Game.h"
+#include "InputManager.h"
+#include "Engine.h"
+
 int screen_width = 800;
 int screen_height = 600;
 
-namespace Math
-{
-	void PrintMatrice4Values(glm::mat4 mat4)
-	{
-		std::cout << std::endl;
-		for(int y = 0 ; y < 4 ; ++y)
 
-		{
-			for(int x = 0 ; x < 4 ; ++x)
-			{
-				std::cout << mat4[x][y] << ";";
-			}
-			std::cout << std::endl;
-		}
-	}
-}
-
-
-namespace opengl{
-	void CheckProgramLinkStatus(GLuint program)
-	{
-		GLint program_success = GL_TRUE;
-		glGetProgramiv(program, GL_LINK_STATUS, &program_success );
-		if(program_success != GL_TRUE)
-		{
-			printf("Error linking program %d!\n", program);
-
-			int info_length = 0;
-			int max_length = 0;
-
-			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &max_length);
-			char info_log[max_length];
-			glGetProgramInfoLog(program, max_length, &info_length, info_log);
-			if(info_length > 0){
-				printf("%s\n", info_log);
-			}
-
-			//delete info_log;
-		}
-		else
-		{
-			printf("Linking successful.\n");
-		}
-	}
-
-	void CheckShaderCompilationErrors(GLuint shader_id)
-	{
-		GLint success = GL_FALSE;
-		glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
-		if(success == GL_FALSE)
-		{
-			perror("Error during vertex shader compilation\n");
-		}
-		else
-		{
-			printf("Compilation success, no error.\n");
-		}
-	}
-
-
-	void CheckOpenGLErrors()
-	{
-		GLenum error = 0;
-		error = glGetError();
-
-		while((error = glGetError()) != GL_NO_ERROR)
-		{
-			switch(error)
-			{
-			case GL_INVALID_ENUM:
-				printf("GL_INVALID_ENUM\n");
-				break;
-			case GL_INVALID_VALUE:
-				printf("GL_INVALID_VALUE\n");
-				break;
-			case GL_INVALID_OPERATION:
-				printf("GL_INVALID_OPERATION\n");
-				break;
-			case GL_INVALID_FRAMEBUFFER_OPERATION:
-				printf("GL_INVALID_FRAMEBUFFER_OPERATION\n");
-				break;
-			default:
-				printf("Other error\n");
-				break;
-			}
-		}
-		printf("No more errors\n");
-	}
-
-	//oen file_name, put its content in char_array, return the char array's size
-	const char* ReadFileToString(const GLchar** file_name)
-	{
-		std::ifstream shader_file(*file_name);
-
-		if(!shader_file){
-			std::cout << "Can't open vertex_shader.gl" << std::endl;
-		}
-		std::string src_code((std::istreambuf_iterator<char>(shader_file)),
-			std::istreambuf_iterator<char>());
-
-		return src_code.c_str();
-
-
-	}
-}
+Game g_game_data(screen_width, screen_height);
+Engine g_engine(screen_width, screen_height);
 
 
 int main(int argc, char* args[])
 {
 
+
 	//fix for Eclipse's console!
 	setvbuf (stdout, NULL, _IONBF, 0);
 
-	SDL_Init(SDL_INIT_VIDEO);
-
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-
-	SDL_Window* window = SDL_CreateWindow(	"C OpenGL",
-											SDL_WINDOWPOS_UNDEFINED,
-											SDL_WINDOWPOS_UNDEFINED,
-											screen_width,
-											screen_height,
-											SDL_WINDOW_OPENGL );
-
-	SDL_GLContext context = SDL_GL_CreateContext(window);
-
-	glewExperimental = GL_TRUE;
-	GLenum glewError = glewInit();
-
-	if( glewError != GLEW_OK )
-	{
-		printf( "Error initializing GLEW! %s\n", glewGetErrorString( glewError ) );
-	}
-	else
-	{
-		printf("Glew OK");
-	}
-
-
 	bool running = true;
-
-	SDL_Event e;
 
 
 
 
 	//Creating vertex array object
-	GLuint vao; 				//vao id
+	/*GLuint vao; 				//vao id
 	glGenVertexArrays(1, &vao);	//generate vao for this id
 	glBindVertexArray(vao);		//bind the vao (make it active)
 
@@ -185,10 +56,10 @@ int main(int argc, char* args[])
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	GLfloat vertices[] = {
-			-0.5,  0.5, 1.0, 0.0, 0.0, 	//top left
-			 0.5,  0.5, 0.0, 1.0, 0.0, 	//top right
-			 0.5, -0.5, 0.0, 0.0, 1.0, 	//bottom left
-			-0.5, -0.5, 0.0, 0.0, 0.0 	//bottom right
+			0,  0, 1.0, 0.0, 0.0, 	//top left
+			1,  0, 0.0, 1.0, 0.0, 	//top right
+			0, 1, 0.0, 0.0, 1.0, 	//bottom left
+			1, 1, 0.0, 0.0, 0.0 	//bottom right
 	};
 
 
@@ -205,7 +76,7 @@ int main(int argc, char* args[])
 
 	GLuint elements[] = {
 			0, 1, 2,
-			2, 3, 0
+			2, 3, 1
 	};
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
@@ -255,57 +126,45 @@ int main(int argc, char* args[])
 
 
 
-	glm::vec3 position(0.0f, 0.0f, 0.0f);
+	glm::vec3 position(2.0f, 2.0f, 0.0f);*/
 	while (running)
 	{
-		const Uint8* state = SDL_GetKeyboardState(NULL);
+		g_engine.Clear();
 
+		running = InputManager::pollEvents();
+		g_game_data.Update();
+		g_engine.Update();
+		g_engine.Swap();
 
-		while (SDL_PollEvent(&e) != 0)
-		{
-			if (e.type == SDL_QUIT)
-			{
-				running = false;
-			}
-
-			if (state[SDL_SCANCODE_W])
-			{
-				position.y += 0.01f;
-
-			}
-			if (state[SDL_SCANCODE_S])
-			{
-				position.y -= 0.01f;
-
-			}
-
-		}
-
-		glm::mat4 view;
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-		position.x = cos(SDL_GetTicks()/1000.0f);
-		position.y = sin(SDL_GetTicks()/1000.0f);
+		//glm::mat4 view;
+		//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 		//position.x = cos
 
-		glm::mat4 projection = glm::perspective(45.0f,
+		/*glm::mat4 projection = glm::perspective(45.0f,
 				(float)screen_width/(float)screen_height,
-				0.1f, 100.0f);
+				0.1f, 100.0f);*/
+		/*glm::mat4 projection = glm::ortho(	0.0f, static_cast<float>(screen_width),
+											static_cast<float>(screen_height), 0.0f,
+											-1.0f, 1.0f);
 
 		glm::mat4 model;
-		float angle =  SDL_GetTicks() / 10 %360;
 		model = glm::translate(model, position);
+		model = glm::scale(model, glm::vec3(200.0f, 200.0f, 0.0f));
+		//float angle =  SDL_GetTicks() / 10 %360;
+
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 2.0f));
 		model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 10.0f));
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 10.0f));*/
 
 		/*GLuint transform_location = glGetUniformLocation(shader_program, "transform");
 		glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(trans));
-*/
+
 		GLuint model_location = glGetUniformLocation(shader_program, "model");
-		GLuint view_location = glGetUniformLocation(shader_program, "view");
+		//GLuint view_location = glGetUniformLocation(shader_program, "view");
 		GLuint projection_location = glGetUniformLocation(shader_program, "projection");
 		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+		//glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
 
 
@@ -334,20 +193,16 @@ int main(int argc, char* args[])
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);*/
 
-		SDL_GL_SwapWindow(window);
 
 	}
-	glDeleteProgram(shader_program);
-	glDeleteShader(fragment_shader);
+	/*glDeleteProgram(shader_program);
+	glDeleteShader(fragment_shader);////
 	glDeleteShader(vertex_shader);
 	glDeleteBuffers(1, &ebo);
 	glDeleteBuffers(1, &vbo);
-	glDeleteVertexArrays(1, &vao);
-	SDL_DestroyWindow(window);
-
-	SDL_GL_DeleteContext(context);
+	glDeleteVertexArrays(1, &vao);*/
 	SDL_Quit();
 
 	return 0;
