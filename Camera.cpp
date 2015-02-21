@@ -41,8 +41,7 @@ Camera::update()
 	glm::vec2 mouse_movement = InputManager::getMouseMovement() * mouse_sensitivity_;
 	yaw_   += mouse_movement.x;
 	pitch_ -= mouse_movement.y;
-	std::cout << "pitch=" << pitch_ << std::endl;
-	std::cout << "yaw=" << yaw_ << std::endl;
+
 	if(pitch_ > 89.0f)
 	{
 		pitch_ = 89.0f;

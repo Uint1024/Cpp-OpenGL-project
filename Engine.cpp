@@ -6,6 +6,7 @@
  *      Author: John
  */
 #define GLEW_STATIC
+ #define GLM_FORCE_RADIANS
 #include <SDL.h>
 #include <fstream>
 #include <iostream>
@@ -22,7 +23,7 @@
 #include "ShaderProgram.h"
 #include "InputManager.h"
 
-//lalala
+//lalal
 
 namespace opengl{
 	void CheckProgramLinkStatus(GLuint program)
@@ -169,7 +170,7 @@ cube_ebo_elements_{
 
 },
 window_size_(screen_width, screen_height),
-camera_(glm::vec3(0.0f,0.0f,1.0f))
+camera_(glm::vec3(0.0f,0.0f,3.0f))
 {
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -246,11 +247,11 @@ camera_(glm::vec3(0.0f,0.0f,1.0f))
 			(void*)(2*sizeof(GLfloat)));*/
 
 
-	projection_ortho_ = glm::ortho(	0.0f, static_cast<float>(screen_width),static_cast<float>(screen_height), 0.0f,	-1.0f, 1.0f);
-	projection_perspective_ = glm::perspective(70.0f, (float)screen_width/(float)screen_height, 0.1f, 100.0f);
+	//projection_ortho_ = glm::ortho(	0.0f, static_cast<float>(screen_width),static_cast<float>(screen_height), 0.0f,	-1.0f, 1.0f);
+	projection_perspective_ = glm::perspective(glm::radians(70.0f), (float)screen_width/(float)screen_height, 0.1f, 100.0f);
 
 
-	//GLuint projection_location = shader_program_->getUniformLocation("projection");
+	//GLuint projection_locaion = shader_program_->getUniformLocation("projection");
 	//glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection_));
 
 	glGenVertexArrays(1, &cube_vao_);
@@ -315,8 +316,8 @@ void Engine::DrawRectangle(const glm::vec3 position, const glm::vec3 size, const
 	view_ = camera_.getViewMatrix();
 	shader_program_->use();
 	glm::mat4 model;
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+	model = glm::translate(model, position);
+	model = glm::scale(model, size);
 
 	glm::mat4 total_projection = projection_perspective_;
 	//math::PrintMatrice4Values(model);

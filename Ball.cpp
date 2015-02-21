@@ -50,8 +50,8 @@ Ball::update()
 		angle_ = 180.0f + angle_;
 	}
 
-	if(position_.y + size_.y > g_engine.getWindowSize().y ||
-			position_.y < 0)
+	if(position_.y + size_.y > 2.5f ||
+			position_.y < 0.0f)
 	{
 		angle_ = - angle_;
 	}

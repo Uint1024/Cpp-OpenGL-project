@@ -43,7 +43,6 @@ GameObject::render()
 void
 GameObject::update()
 {
-
 	render();
 
 	glm::vec2 movement(0.0f, 0.0f);
@@ -51,33 +50,35 @@ GameObject::update()
 	{
 		if(InputManager::getKeysDown()[SDL_SCANCODE_W])
 		{
-			movement.y = -speed_ * g_delta_time;
+			movement.y = speed_ * g_delta_time;
 		}
 		if(InputManager::getKeysDown()[SDL_SCANCODE_S])
 		{
-			movement.y = speed_ * g_delta_time;
+			movement.y = -speed_ * g_delta_time;
 		}
 	}
 	else
 	{
 		if(g_game_data.getBall().getPosition().y > position_.y + size_.y/2.0f)
 		{
-			movement.y = speed_ * g_delta_time;
+			movement.y = -speed_ * g_delta_time;
 		}
 		else
 		{
-			movement.y = -speed_ * g_delta_time;
+			movement.y = speed_ * g_delta_time;
 		}
 	}
+	std::cout << movement.y << std::endl;
 
 	if(movement.y + position_.y < 0)
 	{
 		movement.y = 0;
 	}
-	if(movement.y + size_.y + position_.y >= g_engine.getWindowSize().y)
+	if(movement.y + size_.y + position_.y >= 2.5f)
 	{
 		movement.y = 0;
 	}
+
 
 	position_.y += movement.y;
 
