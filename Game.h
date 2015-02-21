@@ -7,6 +7,7 @@
 
 #ifndef GAME_H_
 #define GAME_H_
+#include "Ball.h"
 
 class GameObject;
 class Game {
@@ -15,9 +16,22 @@ public:
 	virtual ~Game();
 	void Update();
 
+	const Ball& getBall() const {
+		return ball;
+	}
+
+	void setBall(const Ball& ball) {
+		this->ball = ball;
+	}
+
+	GameObject** getRacket() {
+		return racket;
+	}
+
 private:
 
 	GameObject* racket[2];
+	Ball		ball;
 };
 
 extern Game g_game_data;
